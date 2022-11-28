@@ -17,7 +17,7 @@ from NORDEUS.StackedModel import stacked
 from NORDEUS.Support import support
 from stats import plot_learning_curves
 
-data = pd.read_csv('jobfair.csv')
+data = pd.read_csv("NORDEUS/jobfair.csv")
 
 train_test_set = data.loc[data['date'] <= '2022-08-31']
 predict_set = data.loc[data['date'] > '2022-08-31']
@@ -136,16 +136,31 @@ nordeus_val_prepared = full_pipeline.fit_transform(nordeus_val)
 # todo: proveri dane kada je broj vracenih registrovanih prilicno veliki i vidi koji parametri odskacu od mean-a
 
 ########################################################################################################################
+print("gotov data preprocessing")
 
-SVR = support(nordeus_train_prepared, nordeus_labels_tr)
+# SVR = support(nordeus_train_prepared, nordeus_labels_tr)
+# print("gotov SVR")
 
 gbr_best = gbr(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+print("gotov gbr")
 
 rf = randfor(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+print("gotov random forest")
 
-estimatorList = [SVR, gbr_best, rf]
+estimatorList = [gbr_best, rf]
 
 stack = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
+print("gotov stack")
 
-plot_learning_curves(stack, nordeus_train_prepared, nordeus_labels_tr)
-plt.show()
+# plot_learning_curves(stack, nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+# plt.show()
+
+predicted = stack.predict(nordeus_test_prepared)
+print(mean_squared_error(nordeus_labels_ts, predicted))
+
+#stack model gori od gbr boost modela
+#todo: probati sa cnn modelom
+#todo: dodati neke nove feature
+
+
+#dodaj inverse_transform iz scikita, za predikcije, da bi dobio prave vrednosti

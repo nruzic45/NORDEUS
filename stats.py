@@ -4,10 +4,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
 
-def plot_learning_curves(model, X, y):
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
+def plot_learning_curves(model, X_train, y_train, X_val, y_val):
     train_errors, val_errors = [], []
-    for m in range(1, 2500):
+    for m in range(1, 500):
         model.fit(X_train[:m], y_train[:m])
         y_train_predict = model.predict(X_train[:m])
         y_val_predict = model.predict(X_val)
