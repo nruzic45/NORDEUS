@@ -1,4 +1,7 @@
+from operator import mod
+
 import pandas as pd
+from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
@@ -12,6 +15,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from GBR import gbr
+from NORDEUS.Formating import solution
+from NORDEUS.NN import baseline_model
 from NORDEUS.Random import randfor
 from NORDEUS.StackedModel import stacked
 from NORDEUS.Support import support
@@ -30,7 +35,7 @@ valid_set, test_set = train_test_split(train_val_set, test_size=0.5)
 
 
 # print(traintest_set['device_model'].value_counts())
-# print(data.describe())
+#print(data.describe()["returned"])
 
 
 # corr_matrix = train_test_set.corr()
@@ -41,18 +46,26 @@ valid_set, test_set = train_test_split(train_val_set, test_size=0.5)
 # feature engineering class
 # f1 - fresh users koji su dosli orgaically
 # f2 - procenat korisnika registrovanih istog dana organically
+iregt = 1;
+iregc = 3;
 
+#f1 i f2 se nisu pokazali kao feature-i od velike vaznosti
 
 class newAttribs(BaseEstimator, TransformerMixin):
-    def __init__(self, add_fresh_and_organic=True):
+    def __init__(self, add_fresh_and_organic=False):
         self.add_fresh_and_organic = add_fresh_and_organic
 
     def fit(self, X, y=None):
         return self
 
     def transform(self, X, y=None):
-        return X
 
+        fresh_and_organic = mod(X[:, iregt], 3) * mod(X[:, iregc], 3)
+
+        if self.add_fresh_and_organic:
+            return np.c_[X, fresh_and_organic]
+        else:
+            return X
 
 ####################################################### Preprocessing
 
@@ -65,7 +78,7 @@ nordeus_cat = nordeus[["date", "device_model", "os_version"]]
 num_pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy="median")),
     ('attribs_adder', newAttribs()),
-    ('std_scaler', StandardScaler()),
+    #('std_scaler', StandardScaler()),
 ])
 
 # Veoma mali broj vrednosti je NaN za model, probati sa frekvencijskim imputerom
@@ -94,7 +107,10 @@ nordeus_val = valid_set.drop(["returned"], axis=1)
 nordeus_labels_vl = valid_set["returned"].copy()
 nordeus_val_prepared = full_pipeline.fit_transform(nordeus_val)
 
-# %% ############################models and evaluation
+nordeus_predict = predict_set.drop(["returned"], axis=1)
+nordeus_predict_prepared = full_pipeline.fit_transform(nordeus_predict)
+
+# ############################models and evaluation
 # param_grid = [
 #     {'n_estimators': [10], 'max_features': [2, 4]},
 #     {'bootstrap': [False], 'n_estimators': [10], 'max_features': [2]},
@@ -152,15 +168,43 @@ estimatorList = [gbr_best, rf]
 stack = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
 print("gotov stack")
 
-# plot_learning_curves(stack, nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+# plot_learning_curves(gbr_best, nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
 # plt.show()
 
-predicted = stack.predict(nordeus_test_prepared)
-print(mean_squared_error(nordeus_labels_ts, predicted))
+# cnn = KerasRegressor(build_fn=baseline_model(), epochs=30, batch_size=3, verbose=1)
+# print("gotov nn")
+#
+# estimatorList = [gbr_best, rf, cnn]
+#
+# stackN = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
+# print("gotov stack nn")
 
-#stack model gori od gbr boost modela
-#todo: probati sa cnn modelom
-#todo: dodati neke nove feature
+predictedS = stack.predict(nordeus_test_prepared)
+print(mean_squared_error(nordeus_labels_ts, predictedS))
+print('Stack predict')
+
+predictedG = gbr_best.predict(nordeus_test_prepared)
+print(mean_squared_error(nordeus_labels_ts, predictedG))
+print('GBR predict')
+
+# predictedC = cnn.predict(nordeus_test_prepared)
+# print(mean_squared_error(nordeus_labels_ts, predictedC))
+# print('CNN predict')
+
+# predictedCS = stackN.predict(nordeus_test_prepared)
+# print(mean_squared_error(nordeus_labels_ts, predictedCS))
+# print('CNN + stack predict')
 
 
-#dodaj inverse_transform iz scikita, za predikcije, da bi dobio prave vrednosti
+# GBR model se pokazao kao najbolje resenje
+
+############################################################################################################
+
+predict_sety = gbr_best.predict(nordeus_predict_prepared)
+table = (np.c_[nordeus_predict_prepared, predict_sety])
+
+solution = np.c_[predict_set["date"], (table[:, 13]/table[:, 12]*100)]
+
+#solution.tofile('retention_d1_predictions.csv', sep = ',')
+
+print("gotovo")

@@ -1,12 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
 
 
+Nlearning = 2500
 def plot_learning_curves(model, X_train, y_train, X_val, y_val):
     train_errors, val_errors = [], []
-    for m in range(1, 500):
+    for m in range(1, Nlearning):
         model.fit(X_train[:m], y_train[:m])
         y_train_predict = model.predict(X_train[:m])
         y_val_predict = model.predict(X_val)
