@@ -22,93 +22,93 @@ from NORDEUS.StackedModel import stacked
 from NORDEUS.Support import support
 from stats import plot_learning_curves
 
-data = pd.read_csv("NORDEUS/jobfair.csv")
-
-train_test_set = data.loc[data['date'] <= '2022-08-31']
-predict_set = data.loc[data['date'] > '2022-08-31']
-
-train_set, train_val_set = train_test_split(train_test_set, test_size=0.2, random_state=42)
-
-test_size = 0.5
-
-valid_set, test_set = train_test_split(train_val_set, test_size=0.5)
-
-
-# print(traintest_set['device_model'].value_counts())
-#print(data.describe()["returned"])
-
-
-# corr_matrix = train_test_set.corr()
-
-
-#######################################################
-
-# feature engineering class
-# f1 - fresh users koji su dosli orgaically
-# f2 - procenat korisnika registrovanih istog dana organically
-iregt = 1;
-iregc = 3;
-
-#f1 i f2 se nisu pokazali kao feature-i od velike vaznosti
-
-class newAttribs(BaseEstimator, TransformerMixin):
-    def __init__(self, add_fresh_and_organic=False):
-        self.add_fresh_and_organic = add_fresh_and_organic
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X, y=None):
-
-        fresh_and_organic = mod(X[:, iregt], 3) * mod(X[:, iregc], 3)
-
-        if self.add_fresh_and_organic:
-            return np.c_[X, fresh_and_organic]
-        else:
-            return X
-
-####################################################### Preprocessing
-
-nordeus = train_set.drop(["returned"], axis=1)
-nordeus_labels_tr = train_set["returned"].copy()
-
-nordeus_num = nordeus.drop(["date", "device_model", "os_version"], axis=1)
-nordeus_cat = nordeus[["date", "device_model", "os_version"]]
-
-num_pipeline = Pipeline([
-    ('imputer', SimpleImputer(strategy="median")),
-    ('attribs_adder', newAttribs()),
-    #('std_scaler', StandardScaler()),
-])
-
-# Veoma mali broj vrednosti je NaN za model, probati sa frekvencijskim imputerom
-cat_pipeline = Pipeline([
-    ('encoderCat', OrdinalEncoder()),
-    ('imputerCat', SimpleImputer()),
-
-])
-
-num_attribs = list(nordeus_num)
-# Ordinal encoder, jer je u pitanju kodiranje intervala vremena
-cat_attribs = ["date", "device_model", "os_version"]
-
-full_pipeline = ColumnTransformer([
-    ("num", num_pipeline, num_attribs),
-    ("cat", cat_pipeline, cat_attribs),
-])
-
-nordeus_train_prepared = full_pipeline.fit_transform(nordeus)
-
-nordeus_test = test_set.drop(["returned"], axis=1)
-nordeus_labels_ts = test_set["returned"].copy()
-nordeus_test_prepared = full_pipeline.fit_transform(nordeus_test)
-
-nordeus_val = valid_set.drop(["returned"], axis=1)
-nordeus_labels_vl = valid_set["returned"].copy()
-nordeus_val_prepared = full_pipeline.fit_transform(nordeus_val)
-
-nordeus_predict = predict_set.drop(["returned"], axis=1)
-nordeus_predict_prepared = full_pipeline.fit_transform(nordeus_predict)
+# data = pd.read_csv("NORDEUS/jobfair.csv")
+#
+# train_test_set = data.loc[data['date'] <= '2022-08-31']
+# predict_set = data.loc[data['date'] > '2022-08-31']
+#
+# train_set, train_val_set = train_test_split(train_test_set, test_size=0.2, random_state=42)
+#
+# test_size = 0.5
+#
+# valid_set, test_set = train_test_split(train_val_set, test_size=0.5)
+#
+#
+# # print(traintest_set['device_model'].value_counts())
+# #print(data.describe()["returned"])
+#
+#
+# # corr_matrix = train_test_set.corr()
+#
+#
+# #######################################################
+#
+# # feature engineering class
+# # f1 - fresh users koji su dosli orgaically
+# # f2 - procenat korisnika registrovanih istog dana organically
+# iregt = 1;
+# iregc = 3;
+#
+# #f1 i f2 se nisu pokazali kao feature-i od velike vaznosti
+#
+# class newAttribs(BaseEstimator, TransformerMixin):
+#     def __init__(self, add_fresh_and_organic=False):
+#         self.add_fresh_and_organic = add_fresh_and_organic
+#
+#     def fit(self, X, y=None):
+#         return self
+#
+#     def transform(self, X, y=None):
+#
+#         fresh_and_organic = mod(X[:, iregt], 3) * mod(X[:, iregc], 3)
+#
+#         if self.add_fresh_and_organic:
+#             return np.c_[X, fresh_and_organic]
+#         else:
+#             return X
+#
+# ####################################################### Preprocessing
+#
+# nordeus = train_set.drop(["returned"], axis=1)
+# nordeus_labels_tr = train_set["returned"].copy()
+#
+# nordeus_num = nordeus.drop(["date", "device_model", "os_version"], axis=1)
+# nordeus_cat = nordeus[["date", "device_model", "os_version"]]
+#
+# num_pipeline = Pipeline([
+#     ('imputer', SimpleImputer(strategy="median")),
+#     ('attribs_adder', newAttribs()),
+#     #('std_scaler', StandardScaler()),
+# ])
+#
+# # Veoma mali broj vrednosti je NaN za model, probati sa frekvencijskim imputerom
+# cat_pipeline = Pipeline([
+#     ('encoderCat', OrdinalEncoder()),
+#     ('imputerCat', SimpleImputer()),
+#
+# ])
+#
+# num_attribs = list(nordeus_num)
+# # Ordinal encoder, jer je u pitanju kodiranje intervala vremena
+# cat_attribs = ["date", "device_model", "os_version"]
+#
+# full_pipeline = ColumnTransformer([
+#     ("num", num_pipeline, num_attribs),
+#     ("cat", cat_pipeline, cat_attribs),
+# ])
+#
+# nordeus_train_prepared = full_pipeline.fit_transform(nordeus)
+#
+# nordeus_test = test_set.drop(["returned"], axis=1)
+# nordeus_labels_ts = test_set["returned"].copy()
+# nordeus_test_prepared = full_pipeline.fit_transform(nordeus_test)
+#
+# nordeus_val = valid_set.drop(["returned"], axis=1)
+# nordeus_labels_vl = valid_set["returned"].copy()
+# nordeus_val_prepared = full_pipeline.fit_transform(nordeus_val)
+#
+# nordeus_predict = predict_set.drop(["returned"], axis=1)
+# nordeus_predict_prepared = full_pipeline.fit_transform(nordeus_predict)
 
 # ############################models and evaluation
 # param_grid = [
@@ -157,16 +157,16 @@ print("gotov data preprocessing")
 # SVR = support(nordeus_train_prepared, nordeus_labels_tr)
 # print("gotov SVR")
 
-gbr_best = gbr(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
-print("gotov gbr")
+# gbr_best = gbr(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+# print("gotov gbr")
 
-rf = randfor(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
-print("gotov random forest")
-
-estimatorList = [gbr_best, rf]
-
-stack = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
-print("gotov stack")
+# rf = randfor(nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
+# print("gotov random forest")
+#
+# estimatorList = [gbr_best, rf]
+#
+# stack = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
+# print("gotov stack")
 
 # plot_learning_curves(gbr_best, nordeus_train_prepared, nordeus_labels_tr, nordeus_val_prepared, nordeus_labels_vl)
 # plt.show()
@@ -179,13 +179,13 @@ print("gotov stack")
 # stackN = stacked(nordeus_train_prepared, nordeus_labels_tr, estimatorList)
 # print("gotov stack nn")
 
-predictedS = stack.predict(nordeus_test_prepared)
-print(mean_squared_error(nordeus_labels_ts, predictedS))
-print('Stack predict')
-
-predictedG = gbr_best.predict(nordeus_test_prepared)
-print(mean_squared_error(nordeus_labels_ts, predictedG))
-print('GBR predict')
+# predictedS = stack.predict(nordeus_test_prepared)
+# print(mean_squared_error(nordeus_labels_ts, predictedS))
+# print('Stack predict')
+#
+# predictedG = gbr_best.predict(nordeus_test_prepared)
+# print(mean_squared_error(nordeus_labels_ts, predictedG))
+# print('GBR predict')
 
 # predictedC = cnn.predict(nordeus_test_prepared)
 # print(mean_squared_error(nordeus_labels_ts, predictedC))
@@ -200,11 +200,16 @@ print('GBR predict')
 
 ############################################################################################################
 
-predict_sety = gbr_best.predict(nordeus_predict_prepared)
-table = (np.c_[nordeus_predict_prepared, predict_sety])
-
-solution = np.c_[predict_set["date"], (table[:, 13]/table[:, 12]*100)]
+# predict_sety = gbr_best.predict(nordeus_predict_prepared)
+# table = (np.c_[nordeus_predict_prepared, predict_sety])
+#
+# solution = np.c_[predict_set["date"], table[:, 12], table[:, 13]]
 
 #solution.tofile('retention_d1_predictions.csv', sep = ',')
-
+print("debug")
 print("gotovo")
+
+dataS = pd.read_csv("NORDEUS/solutionFIN.csv")
+for i in range(1, 15):
+    print(dataS.loc[dataS['date'] <= '9/'+str(i)+'/2022'].describe()["retentionD1"]["mean"])
+
