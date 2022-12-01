@@ -210,6 +210,6 @@ print("debug")
 print("gotovo")
 
 dataS = pd.read_csv("NORDEUS/solutionFIN.csv")
-for i in range(1, 15):
+for i in range(1, 16):
     print(dataS.loc[dataS['date'] <= '9/'+str(i)+'/2022'].describe()["retentionD1"]["mean"])
 
