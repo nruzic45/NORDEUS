@@ -212,5 +212,7 @@ print("gotovo")
 dataS = pd.read_csv("NORDEUS/solutionFIN.csv")
 sol = []
 for i in range(1, 16):
-    sol.append(dataS.loc[dataS['date'] == '9/'+str(i)+'/2022'].describe()["retentionD1"]["mean"])
+    print(dataS.loc[dataS['date'] == '9/'+str(i)+'/2022'].describe()["retentionD1"]["mean"])
+
+
 
